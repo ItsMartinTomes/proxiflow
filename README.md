@@ -11,7 +11,7 @@
 ProxiFlow is a data preprocessig tool for any kind of data processing (eg. machine learning) that performs
 data cleaning, normalization, and feature engineering.
 
-The biggest advantage if this library (which is basically a wrapper over [polars](https://github.com/pola-rs/polars) data frame) is that it is configurable via YAML configuration file which makes it suitable for MLOps pipelines or for building API requests over it.
+The biggest advantage of this library (which is basically a wrapper over [polars](https://github.com/pola-rs/polars) data frame) is that it is configurable via YAML configuration file which makes it suitable for MLOps pipelines or for building API requests over it.
 
 ## Documentation
 Read the full documentation [here](http://proxiflow.readthedocs.io/).
