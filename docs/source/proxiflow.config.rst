@@ -9,13 +9,13 @@ proxiflow.config.config module
 
 .. automodule:: proxiflow.config.config
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: proxiflow.config
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

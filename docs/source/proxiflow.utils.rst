@@ -9,29 +9,29 @@ proxiflow.utils.data module
 
 .. automodule:: proxiflow.utils.data
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 proxiflow.utils.errors module
 -----------------------------
 
 .. automodule:: proxiflow.utils.errors
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 proxiflow.utils.logger module
 -----------------------------
 
 .. automodule:: proxiflow.utils.logger
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: proxiflow.utils
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

@@ -1,9 +1,9 @@
 [![PyPi version](https://badgen.net/pypi/v/proxiflow/)](https://pypi.org/project/proxiflow)
 [![Documentation Status](https://readthedocs.org/projects/proxiflow/badge/?version=latest)](https://proxiflow.readthedocs.io/en/latest/?badge=latest)
 [![PyPI download month](https://img.shields.io/pypi/dm/proxiflow.svg)](https://pypi.python.org/pypi/proxiflow/)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/tomesm/proxiflow/graphs/commit-activity)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/itsmartintomes/proxiflow/graphs/commit-activity)
 [![PyPI license](https://img.shields.io/pypi/l/proxiflow.svg)](https://pypi.python.org/pypi/proxiflow/)
-[![tests](https://github.com/tomesm/proxiflow/actions/workflows/tests.yml/badge.svg)](https://github.com/tomesm/proxiflow/actions/workflows/tests.yml)
+[![tests](https://github.com/itsmartintomes/proxiflow/actions/workflows/tests.yml/badge.svg)](https://github.com/itsmartintomes/proxiflow/actions/workflows/tests.yml)
 
 
 # ProxiFlow
@@ -20,19 +20,19 @@ Read the full documentation [here](http://proxiflow.readthedocs.io/).
 
 To use ProxiFlow, install it via pip:
 
-``` bash
+```bash
 pip install proxiflow
 ```
 
 You can then call it from the command line:
 
-``` bash
+```bash
 proxiflow --config-file myconfig.yaml --input-file mydata.csv --output-file cleaned_data.csv
 ```
 
 Here\'s an example of a YAML configuration file:
 
-``` yaml
+```yaml
 input_format: csv
 output_format: csv
 
@@ -73,7 +73,7 @@ and missing values should be dropped.
 
 ProxiFlow can also be used as a Python library. Here\'s an example:
 
-``` python
+```python
 import polars as pl
 from proxiflow.config import Config
 from proxiflow.core import Cleaner

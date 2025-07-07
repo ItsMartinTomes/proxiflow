@@ -19,13 +19,13 @@ proxiflow.cli module
 
 .. automodule:: proxiflow.cli
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: proxiflow
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
