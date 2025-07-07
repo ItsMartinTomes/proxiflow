@@ -47,7 +47,7 @@ def main(ctx, config_file, input_file, output_file):
     # Perform data cleaning
     cleaner = Cleaner(config)
     try:
-        cleaned_data = cleaner.clean_data(data)
+        cleaned_data = cleaner.execute(data)
     except ValueError as e:
         logger.error("Error cleaning data: %s", str(e))
         return
@@ -56,7 +56,7 @@ def main(ctx, config_file, input_file, output_file):
     normalizer = Normalizer(config)
     # normalized_data = normalizer.normalize(cleaned_data)
     try:
-        normalized_data = normalizer.normalize(cleaned_data)
+        normalized_data = normalizer.execute(cleaned_data)
     except Exception as e:
         logger.error("Normalizing data: %s", str(e))
         return
@@ -68,7 +68,6 @@ def main(ctx, config_file, input_file, output_file):
     except Exception as e:
         logger.error("Engineering data: %s", str(e))
         return
-
     try:
         write_data(engineered_data, output_file, output_file_format=config.output_format)
     except Exception as e:

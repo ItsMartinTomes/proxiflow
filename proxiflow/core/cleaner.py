@@ -1,4 +1,5 @@
 import polars as pl
+import numpy as np
 from sklearn.impute import KNNImputer
 from proxiflow.config import Config
 from proxiflow.utils import generate_trace
@@ -18,7 +19,7 @@ class Cleaner:
         """
         self.config = config.cleaning_config
 
-    def clean_data(self, df: pl.DataFrame) -> pl.DataFrame:
+    def execute(self, df: pl.DataFrame) -> pl.DataFrame:
         """
         Clean a polars DataFrame by removing duplicates and filling in missing values.
 
@@ -106,8 +107,7 @@ class Cleaner:
         :returns: The DataFrame with duplicates removed.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-        return clone_df.unique(keep="first")
+        return df.unique(keep="first")
 
     def _drop_missing(self, df: pl.DataFrame) -> pl.DataFrame:
         """
@@ -119,8 +119,7 @@ class Cleaner:
         :returns: The DataFrame with rows with missing values dropped.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-        return clone_df.drop_nulls()
+        return df.drop_nulls()
 
     def _mean_missing(self, df: pl.DataFrame) -> pl.DataFrame:
         """
@@ -132,14 +131,10 @@ class Cleaner:
         :returns: The DataFrame with missing values filled.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-        for col in clone_df.columns:
-            # Only Integers and Floats supported
-            if clone_df[col].dtype == pl.Int64 or clone_df[col].dtype == pl.Float64:
-                mean_s = clone_df[col].fill_null(strategy="mean")
-                clone_df.replace(col, mean_s)
-
-        return clone_df
+        # Only update numeric columns
+        numeric_cols = [col for col, dtype in zip(df.columns, df.dtypes) if dtype in (pl.Int64, pl.Float64)]
+        # Use with_columns to fill nulls with the mean for each numeric column
+        return df.with_columns([pl.col(col).fill_null(strategy="mean").alias(col) for col in numeric_cols])
 
     def _median_missing(self, df: pl.DataFrame) -> pl.DataFrame:
         """
@@ -151,16 +146,15 @@ class Cleaner:
         :returns: The DataFrame with missing values filled.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-        for col in clone_df.columns:
-            # Only Integers and Floats supported
-            if clone_df[col].dtype == pl.Int64 or clone_df[col].dtype == pl.Float64:
-                median = clone_df[col].median()
-                median_s = clone_df[col].fill_null(median)
-                clone_df.replace(col, median_s)
-
-        return clone_df
-
+    
+        numeric_cols = [
+            col for col in df.columns
+            if df[col].dtype in (pl.Int64, pl.Float64)
+        ]
+        return df.with_columns([
+            pl.col(col).fill_null(df[col].median()).alias(col)
+            for col in numeric_cols
+        ])
 
     # TODO: Investigate why this randomly fails with:
     #  Error cleaning data: must specify either a fill 'value' or 'strategy'
@@ -174,15 +168,23 @@ class Cleaner:
         :returns: The DataFrame with missing values filled with mode or original null (in case of unsupported data type)
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-        for col in clone_df.columns:
-            # Only Integers and String supported
-            if clone_df[col].dtype == pl.Int64 or clone_df[col].dtype == pl.Utf8:
-                mode = clone_df[col].mode()
-                mode_s = clone_df[col].fill_null(value=mode[0])
-                clone_df.replace(col, mode_s)
-
-        return clone_df
+        # Select columns of type Int64 or Utf8 (string)
+        target_cols = [
+            col for col in df.columns
+            if df[col].dtype in (pl.Int64, pl.Utf8)
+        ]
+        # Build a list of expressions to fill nulls with mode
+        fill_exprs = []
+        for col in target_cols:
+            # .mode() returns a Series, take the first value (most common)
+            mode_val = df[col].mode()
+            if len(mode_val) > 0:
+                fill_exprs.append(
+                    pl.col(col).fill_null(mode_val[0]).alias(col)
+                )
+            # If the column is all null, skip filling (no mode)
+        # Return new DataFrame with filled columns
+        return df.with_columns(fill_exprs)
 
     def _knn_impute_missing(self, df: pl.DataFrame) -> pl.DataFrame:
         """
@@ -192,18 +194,25 @@ class Cleaner:
         :returns: The DataFrame with missing values filled.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-        # Convert the DataFrame to numpy array
-        np_df = clone_df.to_numpy()
-
-        # Initialize the KNN Imputer
+        # Get original schema and column order
+        schema = df.schema
+        col_order = df.columns     
+        # Convert to numpy array (float64 for KNNImputer)
+        np_df = df.to_numpy().astype(np.float64)       
+        # Impute missing values
         knn_imputer = KNNImputer(n_neighbors=5, weights="uniform")
-        imputed_np_df = knn_imputer.fit_transform(np_df)
-
-        # Convert the imputed numpy array back to polars DataFrame
-        imputed_df = pl.DataFrame(imputed_np_df, schema=clone_df.schema)
-
-        return imputed_df
+        imputed_np_df = knn_imputer.fit_transform(np_df)        
+        # Rebuild DataFrame with proper null handling for Int64 columns
+        data = {}
+        for idx, col in enumerate(col_order):
+            col_data = imputed_np_df[:, idx]
+            if schema[col] == pl.Int64:
+                # Convert NaN to None for Int64 columns
+                data[col] = [int(x) if not np.isnan(x) else None for x in col_data]
+            else:
+                data[col] = col_data      
+        # Create DataFrame and cast to original schema
+        return pl.DataFrame(data).cast(schema)
 
     # Handle outliers with IQR method
     def _handle_outliers(self, df: pl.DataFrame) -> pl.DataFrame:
@@ -216,20 +225,23 @@ class Cleaner:
         :returns: The DataFrame with outliers removed.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
+        # Select Float64 columns (or adjust for other numeric types)
+        float_cols = [col for col in df.columns if df.schema[col] == pl.Float64]
+        # Build expressions for outlier replacement
+        exprs = []
+        for col in float_cols:
+            q1 = df[col].quantile(0.25)
+            q3 = df[col].quantile(0.75)
+            iqr = q3 - q1
+            lower_bound = q1 - 1.5 * iqr
+            upper_bound = q3 + 1.5 * iqr
+            median = df[col].median()
 
-        for col in clone_df.columns:
-            if clone_df[col].dtype == pl.Float64:
-                # Get the first and third quartiles and the IQR
-                q1 = clone_df[col].quantile(0.25)
-                q3 = clone_df[col].quantile(0.75)
-                iqr = q3 - q1
-                # Identify the lower and upper bounds for outliers
-                lower_bound = q1 - 1.5 * iqr
-                upper_bound = q3 + 1.5 * iqr
-                # Replace outliers with the median value of the series
-                median = clone_df[col].median()
-                serie = clone_df[col].apply(lambda x: median if x < lower_bound or x > upper_bound else x)
-                clone_df.replace(col, serie)
+            # Conditionally replace outliers with median
+            expr = pl.when(
+                (pl.col(col) < lower_bound) | (pl.col(col) > upper_bound)
+            ).then(median).otherwise(pl.col(col)).alias(col)
+            
+            exprs.append(expr)
 
-        return clone_df
+        return df.with_columns(exprs)

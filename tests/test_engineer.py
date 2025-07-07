@@ -47,8 +47,8 @@ class TestOneHotEncoding:
                 "num2": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
             }
         )
-        engineered_result = engineer.one_hot_encode(df, ["category2"])
-        assert expected.frame_equal(engineered_result)
+        engineered_result = engineer._one_hot_encode(df, ["category2"])
+        assert expected.equals(engineered_result)
 
 
 class TestFeatureScaling:
@@ -63,7 +63,7 @@ class TestFeatureScaling:
         Given a DataFrame and an empty list of columns,
         feature_scaling should return the original DataFrame unchanged.
         """
-        assert df.frame_equal(engineer.feature_scaling(df, [], 2))
+        assert df.equals(engineer._feature_scaling(df, [], 2))
 
     def test_single_degree(self, engineer, df):
         """
@@ -73,8 +73,8 @@ class TestFeatureScaling:
         feature_scaling should return the DataFrame with the correct polynomial features.
         """
         expected = df.with_columns((pl.col("A") ** 2).alias("A_2"))
-        result = engineer.feature_scaling(df, ["A"], 2)
-        assert expected.frame_equal(result)
+        result = engineer._feature_scaling(df, ["A"], 2)
+        assert expected.equals(result)
 
     def test_multiple_degrees(self, engineer, df):
         """
@@ -89,5 +89,5 @@ class TestFeatureScaling:
             (pl.col("B") ** 2).alias("B_2"),
             (pl.col("B") ** 3).alias("B_3"),
         )
-        result = engineer.feature_scaling(df, ["A", "B"], 3)
-        assert expected.frame_equal(result)
+        result = engineer._feature_scaling(df, ["A", "B"], 3)
+        assert expected.equals(result)

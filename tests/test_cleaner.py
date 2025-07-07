@@ -24,7 +24,7 @@ class TestCleaner:
     A test class for the Cleaner class in the proxiflow library.
     """
 
-    def test_clean_data_with_empty_dataframe(self, cleaner):
+    def test_execute_with_empty_dataframe(self, cleaner):
         """
         Test that an empty DataFrame raises a ValueError when cleaned.
 
@@ -38,7 +38,7 @@ class TestCleaner:
         AssertionError: If the test fails.
         """
         with pytest.raises(ValueError):
-            cleaner.clean_data(pl.DataFrame())
+            cleaner.execute(pl.DataFrame())
 
     def test_remove_duplicates(self, data, cleaner):
         """
@@ -139,8 +139,8 @@ class TestCleaner:
     def test_knn_impute_missing(self, cleaner):
         # Create a sample DataFrame with missing values
         data = {
-            "A": [1, 2, np.nan, 4],
-            "B": [5, np.nan, np.nan, 8],
+            "A": [1, 2, None, 4],
+            "B": [5, None, None, 8],
             "C": [9, 10, 11, 12],
         }
         df = pl.DataFrame(data)
@@ -174,4 +174,4 @@ class TestCleaner:
         )
         cleaned_data = cleaner._handle_outliers(df)
         print(cleaned_data)
-        assert cleaned_data.frame_equal(expected)
+        assert cleaned_data.equals(expected)

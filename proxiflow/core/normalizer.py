@@ -21,7 +21,7 @@ class Normalizer:
         """
         self.config: Dict[str, Any] = config.normalization_config
 
-    def normalize(self, df: pl.DataFrame) -> pl.DataFrame:
+    def execute(self, df: pl.DataFrame) -> pl.DataFrame:
         """
         Normalize the specified DataFrame using the specified configuration.
 
@@ -74,27 +74,33 @@ class Normalizer:
         :return: The normalized DataFrame.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-        columns = check_columns(clone_df, columns)
+        columns = check_columns(df, columns)
         # If no columns exist, return the original DataFrame
         if len(columns) == 0:
-            return clone_df
-        # Select the specified columns
-        selected_df = clone_df.select(columns)
+            return df
 
-        for col in selected_df.columns:
-            # We can not subtract strings, so we only normalize numeric columns
-            if clone_df[col].dtype == pl.Int64 or clone_df[col].dtype == pl.Float64:
-                # Get the min and max values of the column
-                min_val = cast(Union[int, float], selected_df[col].min())
-                max_val = cast(Union[int, float], selected_df[col].max())
+        exprs = []
+        for col in columns:
+            dtype = df.schema[col]
+            if dtype in (pl.Int64, pl.Float64):
+                min_val = df[col].min()
+                max_val = df[col].max()
                 if max_val - min_val == 0:
                     raise ValueError(f"Error normalizing min-max column {col}: division by zero")
-                # Normalize the column
-                min_max = (df[col] - min_val) / (max_val - min_val)
-                clone_df.replace(col, min_max)
+                exprs.append(
+                    ((pl.col(col) - min_val) / (max_val - min_val)).alias(col)
+                )
+            else:
+                # Keep non-numeric columns unchanged
+                exprs.append(pl.col(col))
 
-        return clone_df
+        # For columns not in the normalization list, keep them unchanged
+        for col in df.columns:
+            if col not in columns:
+                exprs.append(pl.col(col))
+
+        # Return DataFrame with normalized columns
+        return df.with_columns(exprs)
 
     def _z_score_normalize(self, df: pl.DataFrame, columns: List[str]) -> pl.DataFrame:
         """
@@ -107,22 +113,20 @@ class Normalizer:
         :return: The normalized DataFrame.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-        columns = check_columns(clone_df, columns)
-
+        columns = check_columns(df, columns)
         if len(columns) == 0:
-            return clone_df
+            return df
 
-        selected_df = clone_df.select(columns)
-
-        for col in selected_df.columns:
-            if clone_df[col].dtype == pl.Int64 or clone_df[col].dtype == pl.Float64:
-                # Get the values of the column. Filter out None values
-                values = list(filter(lambda x: x is not None, clone_df[col].to_list()))
-                z_score = stats.zscore(values)
-                clone_df.replace(col, pl.Series(z_score))
-
-        return clone_df
+        exprs = []
+        for col in df.columns:
+            dtype = df.schema[col]
+            if col in columns and dtype in (pl.Int64, pl.Float64):
+                exprs.append(
+                    ((pl.col(col) - pl.col(col).mean()) / pl.col(col).std(ddof=0)).alias(col)
+                )
+            else:
+                exprs.append(pl.col(col))
+        return df.with_columns(exprs)
 
     def _log_normalize(self, df: pl.DataFrame, columns: List[str]) -> pl.DataFrame:
         """
@@ -135,18 +139,17 @@ class Normalizer:
         :return: The normalized DataFrame.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-        columns = check_columns(clone_df, columns)
-
+        columns = check_columns(df, columns)
         if len(columns) == 0:
-            return clone_df
+            return df
 
-        selected_df = clone_df.select(columns)
-
-        for col in selected_df.columns:
-            if clone_df[col].dtype == pl.Int64 or clone_df[col].dtype == pl.Float64:
-                norm = (1 + clone_df[col]) / 2
-                log = norm.log()
-                clone_df.replace(col, log)
-
-        return clone_df
+        exprs = []
+        for col in df.columns:
+            dtype = df.schema[col]
+            if col in columns and dtype in (pl.Int64, pl.Float64):
+                exprs.append(
+                    ((1 + pl.col(col)) / 2).log().alias(col)
+                )
+            else:
+                exprs.append(pl.col(col))
+        return df.with_columns(exprs)

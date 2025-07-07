@@ -52,7 +52,7 @@ class Engineer:
 
         return engineered_df
 
-    def one_hot_encode(self, df: pl.DataFrame, columns: list[str]) -> pl.DataFrame:
+    def _one_hot_encode(self, df: pl.DataFrame, columns: list[str]) -> pl.DataFrame:
         """
         One-hot encode the specified columns of the given DataFrame.
 
@@ -63,14 +63,13 @@ class Engineer:
         :return: The one-hot encoded DataFrame.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-        columns = check_columns(clone_df, columns)
+
+        columns = check_columns(df, columns)
         if len(columns) == 0:
-            return clone_df
+            return df
+        return df.to_dummies(columns=columns)
 
-        return clone_df.to_dummies(columns=columns)
-
-    def feature_scaling(self, df: pl.DataFrame, columns: list[str], degree: int) -> pl.DataFrame:
+    def _feature_scaling(self, df: pl.DataFrame, columns: list[str], degree: int) -> pl.DataFrame:
         """
         Creates polynomial features of the given degree for the specified columns of the given DataFrame.
 
@@ -83,21 +82,18 @@ class Engineer:
         :return: The DataFrame with polynomial features.
         :rtype: polars.DataFrame
         """
-        clone_df = df.clone()
-
         if not columns:
-            return clone_df
+            return df
 
-        columns = check_columns(clone_df, columns)
-        # Add polynomial features for each column
+        columns = check_columns(df, columns)
+        exprs = []
+
         for col in columns:
-            # We can not square root strings
-            if clone_df[col].dtype == pl.Int64 or clone_df[col].dtype == pl.Float64:
-                # Create a new column for each degree of the polynomial
-                degrees = range(2, degree + 1)
-                # Use list comprehension to generate the new columns
-                new_cols = [(pl.col(col) ** i).alias(f"{col}_{i}") for i in degrees]
-                # Combine the new columns with the original DataFrame
-                clone_df = clone_df.with_columns(*new_cols)
-
-        return clone_df
+            dtype = df.schema[col]
+            if dtype in (pl.Int64, pl.Float64):
+                # Generate polynomial features for degrees 2 to degree
+                exprs.extend([
+                    (pl.col(col) ** i).alias(f"{col}_{i}") for i in range(2, degree + 1)
+                ])
+        # Add new columns to DataFrame
+        return df.with_columns(exprs) if exprs else df

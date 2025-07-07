@@ -31,7 +31,7 @@ typecheck:
 	mypy proxiflow
 
 test:
-	${PYTHON} -m pytest -v
+	${PYTHON} -m pytest -v tests
 
 doc:
 	@sphinx-apidoc -f -o ${DOC}/source ${NAME} --ext-autodoc && cd ${DOC}
