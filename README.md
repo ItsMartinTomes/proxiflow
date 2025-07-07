@@ -1,5 +1,5 @@
 [![PyPi version](https://badgen.net/pypi/v/proxiflow/)](https://pypi.org/project/proxiflow)
-[![Documentation Status](https://readthedocs.org/projects/proxiflow/badge/?version=latest)](https://proxiflow.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/proxiflow/badge/?version=v0.1.10)](https://proxiflow.readthedocs.io/en/latest/?badge=v0.1.10)
 [![PyPI download month](https://img.shields.io/pypi/dm/proxiflow.svg)](https://pypi.python.org/pypi/proxiflow/)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/itsmartintomes/proxiflow/graphs/commit-activity)
 [![PyPI license](https://img.shields.io/pypi/l/proxiflow.svg)](https://pypi.python.org/pypi/proxiflow/)
