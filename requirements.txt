@@ -27,7 +27,6 @@ pathspec==0.12.1
 platformdirs==4.3.8
 pluggy==1.6.0
 polars==1.30.0
--e git+ssh://git@github.com/ItsMartinTomes/proxiflow.git@e431970364cb5667b5fc57dd385ed6bcda476b8e#egg=proxiflow
 pyaml==25.1.0
 pycnite==2024.7.31
 pydot==4.0.0
