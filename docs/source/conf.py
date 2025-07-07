@@ -11,9 +11,9 @@ import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
 project = 'ProxiFlow'
-copyright = '2023, Martin Tomes'
+copyright = '2025, Martin Tomes'
 author = 'Martin Tomes'
-release = '0.1.7'
+release = '0.1.10'
 
 
 
