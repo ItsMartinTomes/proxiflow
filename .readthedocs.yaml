@@ -6,4 +6,9 @@ build:
     python: "3.13"
 
 sphinx:
-  configuration: docs/source
+  configuration: docs/sourcei/conf.py
+
+python:
+  install:
+    - requirements: docs/requirements.txt
+
