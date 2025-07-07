@@ -1,10 +1,9 @@
 import polars as pl
-import scipy.stats as stats
 from proxiflow.config import Config
 from proxiflow.utils import generate_trace
 from .core_utils import check_columns
 
-from typing import Dict, Any, List, Union, cast
+from typing import Dict, Any, List
 
 
 class Normalizer:
@@ -30,21 +29,20 @@ class Normalizer:
         :return: The normalized DataFrame.
         :rtype: polars.DataFrame
         """
-        normalized_df = df.clone()
+        normalized_df = df  
+
         # Apply min-max normalization
-        min_max_cols: List[str] = self.config["min_max"]
+        min_max_cols: list[str] = self.config.get("min_max", [])
         if min_max_cols:
-            # Normalize the specified columns
             try:
                 normalized_df = self._min_max_normalize(normalized_df, min_max_cols)
             except Exception as e:
-                trace: str = generate_trace(e, self._min_max_normalize)
+                trace = generate_trace(e, self._min_max_normalize)
                 raise Exception(f"Trying min-max normalization: {trace}")
 
         # Apply z-score normalization
-        z_score_cols: List[str] = self.config["z_score"]
+        z_score_cols: list[str] = self.config.get("z_score", [])
         if z_score_cols:
-            # Normalize the specified columns
             try:
                 normalized_df = self._z_score_normalize(normalized_df, z_score_cols)
             except Exception as e:
@@ -52,9 +50,8 @@ class Normalizer:
                 raise Exception(f"Trying z-score normalization: {trace}")
 
         # Apply log normalization
-        log_cols: List[str] = self.config["log"]
+        log_cols: list[str] = self.config.get("log", [])
         if log_cols:
-            # Normalize the specified columns
             try:
                 normalized_df = self._log_normalize(normalized_df, log_cols)
             except Exception as e:

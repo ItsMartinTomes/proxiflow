@@ -34,8 +34,8 @@ class Cleaner:
         if df.shape[0] == 0:
             raise ValueError("Empty DataFrame, no missing values to fill.")
 
-        cleaned_df = df.clone()
-        # #Handle missing values. drop|mean|mode are mutually exclusive
+        cleaned_df = df  
+        # Handle missing values. drop|mean|mode are mutually exclusive
         missing_values = self.config["handle_missing_values"]
 
         # Drop missing values
@@ -96,6 +96,7 @@ class Cleaner:
                 raise Exception(f"Trying to remove duplicate rows: {trace}")
 
         return cleaned_df
+
 
     def _remove_duplicates(self, df: pl.DataFrame) -> pl.DataFrame:
         """

@@ -28,11 +28,9 @@ class Engineer:
         :return: The DataFrame with the new features.
         :rtype: polars.DataFrame
         """
-        engineered_df = df.clone()
-        # Apply feature engineering
+        engineered_df = df  
 
         if self.config["one_hot_encoding"]:
-            # Perform feature engineering on the specified columns
             try:
                 engineered_df = self.one_hot_encode(engineered_df, self.config["one_hot_encoding"])
             except Exception as e:
@@ -41,7 +39,6 @@ class Engineer:
 
         feature_scaling = self.config["feature_scaling"]
         if feature_scaling:
-            # Perform feature scaling on the specified columns
             try:
                 engineered_df = self.feature_scaling(
                     engineered_df, feature_scaling["columns"], feature_scaling["degree"]
