@@ -1,0 +1,8 @@
+certifi==2025.4.26
+cffi==1.17.1
+cryptography==45.0.3
+gpg==1.24.3
+notmuch2==0.39
+packaging==24.2
+pycparser==2.22
+wheel @ file:///opt/homebrew/Cellar/python%403.13/3.13.2/libexec/wheel-0.45.1-py3-none-any.whl#sha256=b9235939e2096903717cb6bfc132267f8a7e46deb2ec3ef9c5e234ea301795d0
