@@ -79,7 +79,7 @@ from proxiflow.config import Config
 from proxiflow.core import Cleaner
 
 # Load the data
-df = pl.read_csv("mydata.csv")
+data = pl.read_csv("mydata.csv")
 
 # Load the configuration
 config = Config("myconfig.yaml")
