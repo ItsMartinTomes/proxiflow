@@ -28,23 +28,23 @@ class Engineer:
         :return: The DataFrame with the new features.
         :rtype: polars.DataFrame
         """
-        engineered_df = df  
+        engineered_df = df
 
         if self.config["one_hot_encoding"]:
             try:
-                engineered_df = self.one_hot_encode(engineered_df, self.config["one_hot_encoding"])
+                engineered_df = self._one_hot_encode(engineered_df, self.config["one_hot_encoding"])
             except Exception as e:
-                trace = generate_trace(e, self.one_hot_encode)
+                trace = generate_trace(e, self._one_hot_encode)
                 raise Exception(f"Trying one-hot encoding: {trace}")
 
         feature_scaling = self.config["feature_scaling"]
         if feature_scaling:
             try:
-                engineered_df = self.feature_scaling(
+                engineered_df = self._feature_scaling(
                     engineered_df, feature_scaling["columns"], feature_scaling["degree"]
                 )
             except Exception as e:
-                trace = generate_trace(e, self.feature_scaling)
+                trace = generate_trace(e, self._feature_scaling)
                 raise Exception(f"Trying polynomial feature scaling: {trace}")
 
         return engineered_df
@@ -89,8 +89,6 @@ class Engineer:
             dtype = df.schema[col]
             if dtype in (pl.Int64, pl.Float64):
                 # Generate polynomial features for degrees 2 to degree
-                exprs.extend([
-                    (pl.col(col) ** i).alias(f"{col}_{i}") for i in range(2, degree + 1)
-                ])
+                exprs.extend([(pl.col(col) ** i).alias(f"{col}_{i}") for i in range(2, degree + 1)])
         # Add new columns to DataFrame
         return df.with_columns(exprs) if exprs else df

@@ -1,7 +1,7 @@
 # Project specific
 tests/data/output.csv
 _proxiflow_venv_/
-
+.pypirc
 
 # OSX
 .DS_Store

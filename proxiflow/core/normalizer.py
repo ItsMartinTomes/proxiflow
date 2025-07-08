@@ -29,7 +29,7 @@ class Normalizer:
         :return: The normalized DataFrame.
         :rtype: polars.DataFrame
         """
-        normalized_df = df  
+        normalized_df = df
 
         # Apply min-max normalization
         min_max_cols: list[str] = self.config.get("min_max", [])
@@ -78,17 +78,17 @@ class Normalizer:
 
         exprs = []
         for col in columns:
+            # We need to check types because df[col].min()/max() are not guaranteed to be numeric types
             dtype = df.schema[col]
-            if dtype in (pl.Int64, pl.Float64):
+            if dtype in (pl.Int64, pl.Float64): 
                 min_val = df[col].min()
                 max_val = df[col].max()
+                if not (isinstance(min_val, (int, float)) and isinstance(max_val, (int, float))):
+                    continue  
                 if max_val - min_val == 0:
                     raise ValueError(f"Error normalizing min-max column {col}: division by zero")
-                exprs.append(
-                    ((pl.col(col) - min_val) / (max_val - min_val)).alias(col)
-                )
+                exprs.append(((pl.col(col) - min_val) / (max_val - min_val)).alias(col))
             else:
-                # Keep non-numeric columns unchanged
                 exprs.append(pl.col(col))
 
         # For columns not in the normalization list, keep them unchanged
@@ -118,9 +118,7 @@ class Normalizer:
         for col in df.columns:
             dtype = df.schema[col]
             if col in columns and dtype in (pl.Int64, pl.Float64):
-                exprs.append(
-                    ((pl.col(col) - pl.col(col).mean()) / pl.col(col).std(ddof=0)).alias(col)
-                )
+                exprs.append(((pl.col(col) - pl.col(col).mean()) / pl.col(col).std(ddof=0)).alias(col))
             else:
                 exprs.append(pl.col(col))
         return df.with_columns(exprs)
@@ -144,9 +142,7 @@ class Normalizer:
         for col in df.columns:
             dtype = df.schema[col]
             if col in columns and dtype in (pl.Int64, pl.Float64):
-                exprs.append(
-                    ((1 + pl.col(col)) / 2).log().alias(col)
-                )
+                exprs.append(((1 + pl.col(col)) / 2).log().alias(col))
             else:
                 exprs.append(pl.col(col))
         return df.with_columns(exprs)

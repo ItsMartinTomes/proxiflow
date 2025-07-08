@@ -1,5 +1,6 @@
 import click
-
+import polars as pl
+from typing import Optional
 from .config import Config
 from .utils import get_logger, load_data, write_data
 from .core import Cleaner, Normalizer, Engineer
@@ -29,7 +30,7 @@ from .core import Cleaner, Normalizer, Engineer
 )
 @click.pass_context
 @click.version_option()
-def main(ctx, config_file, input_file, output_file):
+def main(ctx: click.Context, config_file: str, input_file: str, output_file: str) -> None:
     # Set up logger
     logger = get_logger(__name__)
 
@@ -37,12 +38,20 @@ def main(ctx, config_file, input_file, output_file):
     config = Config(config_file)
 
     # Load data
+    data: Optional[pl.DataFrame] = None  # or Any if type unknown
+
     try:
         data = load_data(input_file, input_file_format=config.input_format)
     except FileNotFoundError as e:
         logger.error("Input file not found: %s", str(e))
+        return
     except ValueError as e:
         logger.error("Error parsing input file: %s", str(e))
+        return
+
+    if data is None:
+        logger.error("No data loaded, exiting.")
+        return
 
     # Perform data cleaning
     cleaner = Cleaner(config)

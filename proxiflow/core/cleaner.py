@@ -1,8 +1,9 @@
 import polars as pl
 import numpy as np
-from sklearn.impute import KNNImputer
+from sklearn.impute import KNNImputer # type: ignore[import-untyped]
 from proxiflow.config import Config
 from proxiflow.utils import generate_trace
+from typing import Mapping
 
 
 class Cleaner:
@@ -34,7 +35,7 @@ class Cleaner:
         if df.shape[0] == 0:
             raise ValueError("Empty DataFrame, no missing values to fill.")
 
-        cleaned_df = df  
+        cleaned_df = df
         # Handle missing values. drop|mean|mode are mutually exclusive
         missing_values = self.config["handle_missing_values"]
 
@@ -97,7 +98,6 @@ class Cleaner:
 
         return cleaned_df
 
-
     def _remove_duplicates(self, df: pl.DataFrame) -> pl.DataFrame:
         """
         Remove duplicate rows from a polars DataFrame.
@@ -147,15 +147,9 @@ class Cleaner:
         :returns: The DataFrame with missing values filled.
         :rtype: polars.DataFrame
         """
-    
-        numeric_cols = [
-            col for col in df.columns
-            if df[col].dtype in (pl.Int64, pl.Float64)
-        ]
-        return df.with_columns([
-            pl.col(col).fill_null(df[col].median()).alias(col)
-            for col in numeric_cols
-        ])
+
+        numeric_cols = [col for col in df.columns if df[col].dtype in (pl.Int64, pl.Float64)]
+        return df.with_columns([pl.col(col).fill_null(df[col].median()).alias(col) for col in numeric_cols])
 
     # TODO: Investigate why this randomly fails with:
     #  Error cleaning data: must specify either a fill 'value' or 'strategy'
@@ -170,19 +164,14 @@ class Cleaner:
         :rtype: polars.DataFrame
         """
         # Select columns of type Int64 or Utf8 (string)
-        target_cols = [
-            col for col in df.columns
-            if df[col].dtype in (pl.Int64, pl.Utf8)
-        ]
+        target_cols = [col for col in df.columns if df[col].dtype in (pl.Int64, pl.Utf8)]
         # Build a list of expressions to fill nulls with mode
         fill_exprs = []
         for col in target_cols:
             # .mode() returns a Series, take the first value (most common)
             mode_val = df[col].mode()
             if len(mode_val) > 0:
-                fill_exprs.append(
-                    pl.col(col).fill_null(mode_val[0]).alias(col)
-                )
+                fill_exprs.append(pl.col(col).fill_null(mode_val[0]).alias(col))
             # If the column is all null, skip filling (no mode)
         # Return new DataFrame with filled columns
         return df.with_columns(fill_exprs)
@@ -197,12 +186,12 @@ class Cleaner:
         """
         # Get original schema and column order
         schema = df.schema
-        col_order = df.columns     
+        col_order = df.columns
         # Convert to numpy array (float64 for KNNImputer)
-        np_df = df.to_numpy().astype(np.float64)       
+        np_df = df.to_numpy().astype(np.float64)
         # Impute missing values
         knn_imputer = KNNImputer(n_neighbors=5, weights="uniform")
-        imputed_np_df = knn_imputer.fit_transform(np_df)        
+        imputed_np_df = knn_imputer.fit_transform(np_df)
         # Rebuild DataFrame with proper null handling for Int64 columns
         data = {}
         for idx, col in enumerate(col_order):
@@ -211,9 +200,10 @@ class Cleaner:
                 # Convert NaN to None for Int64 columns
                 data[col] = [int(x) if not np.isnan(x) else None for x in col_data]
             else:
-                data[col] = col_data      
+                data[col] = col_data
         # Create DataFrame and cast to original schema
-        return pl.DataFrame(data).cast(schema)
+        schema_dict: Mapping[str, pl.DataType] = dict(df.schema)
+        return pl.DataFrame(data).cast(schema_dict) # type: ignore[arg-type]
 
     # Handle outliers with IQR method
     def _handle_outliers(self, df: pl.DataFrame) -> pl.DataFrame:
@@ -233,16 +223,22 @@ class Cleaner:
         for col in float_cols:
             q1 = df[col].quantile(0.25)
             q3 = df[col].quantile(0.75)
+            median = df[col].median()
+
+            # TODO: Skip or handle columns where quantile or median is None?
+            if q1 is None or q3 is None or median is None:
+                continue  # or handle as appropriate
+
             iqr = q3 - q1
             lower_bound = q1 - 1.5 * iqr
             upper_bound = q3 + 1.5 * iqr
-            median = df[col].median()
 
-            # Conditionally replace outliers with median
-            expr = pl.when(
-                (pl.col(col) < lower_bound) | (pl.col(col) > upper_bound)
-            ).then(median).otherwise(pl.col(col)).alias(col)
-            
+            expr = (
+                pl.when((pl.col(col) < lower_bound) | (pl.col(col) > upper_bound))
+                .then(median)
+                .otherwise(pl.col(col))
+                .alias(col)
+            )
             exprs.append(expr)
 
         return df.with_columns(exprs)

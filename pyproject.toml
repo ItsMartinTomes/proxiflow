@@ -4,33 +4,32 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "proxiflow"
-version = "0.1.9"
+version = "0.1.10"
 description = "Data Preprocessing flow tool in python"
 authors = [
-  {name="Martin Tomes", email= "tomesm@gmail.com"},
+    {name = "Martin Tomes", email = "its@martintomes.net"}
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.8"
 classifiers = [
-  "Development Status :: 1 - Planning",
-  "Environment :: Console",
-  "Intended Audience :: Developers",
-  "Operating System :: POSIX :: Linux",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: Implementation :: CPython",
-  "Programming Language :: Python :: 3.11",
-  "Topic :: Scientific/Engineering",
+    "Development Status :: 1 - Planning",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering"
 ]
 dependencies = [
-  "polars",
-  "numpy",
-  "click",
-  "pyaml",
-  "scipy",
-  "scikit-learn"
+    "polars",
+    "numpy",
+    "click",
+    "pyaml",
+    "scipy",
+    "scikit-learn"
 ]
-# dynamic = ["version"]
 
 [project.scripts]
 proxiflow = "proxiflow.cli:__main__"
@@ -46,24 +45,23 @@ dev = [
 ]
 docs = [
     "sphinx-rtd-theme>=1.2.0",
-    "sphinx",
+    "sphinx"
 ]
 
-
 [project.urls]
-"Repository" = "https://github.com/tomesink/proxiflow"
-"Documentation" = "http://proxiflow.readthedocs.io"
-"Bug Tracker" = "https://github.com/tomesink/proxiflow/issues"
+Repository = "https://github.com/itsmartintomes/proxiflow"
+Documentation = "http://proxiflow.readthedocs.io"
+"Bug Tracker" = "https://github.com/itsmartintomes/proxiflow/issues"
 
 [tool.setuptools.packages]
 find = {}
 
 [tool.black]
 line-length = 120
-extend-ignore = "E203"
+extend-exclude = "E203"
 
 [tool.ruff]
-select = ["E", "F"]
+lint.select = ["E", "F"]
 line-length = 120
 
 [tool.mypy]

@@ -4,7 +4,7 @@ LINTER = ruff
 FORMATTER = black
 NAME=proxiflow
 DOC=docs
-VERSION=0.1.9
+VERSION=0.1.10
 
 .PHONY = test
 
@@ -56,5 +56,5 @@ check-build:
 	twine check dist/*
 
 clean:
-	@rm -rf build dist *.egg-info
+	@rm -rf dist/ build/ *.egg-info *.egg-info/
 	
